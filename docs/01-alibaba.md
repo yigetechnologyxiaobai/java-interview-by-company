@@ -1888,3 +1888,232 @@ public class UserService {
 ---
 
 **面试总结**：蚂蚁 AI Coding 笔试考察 AI 辅助编程能力，建议熟练使用 Copilot、通义灵码等工具，熟悉提示词工程和代码审查思路。
+
+---
+
+## 十四、2026 阿里云暑期实习一面真题
+
+> 来源：牛客网 2026-03
+> 特点：项目深挖 + 计网八股 + 手撕算法
+
+### Q1: 哈希加密相比对称加密和非对称加密的优点？
+
+**参考答案**：
+
+| 特性 | 哈希加密 | 对称加密 | 非对称加密 |
+|------|---------|---------|-----------|
+| 可逆性 | 单向，不可逆 | 可逆 | 可逆（私钥解密） |
+| 密钥 | 无需密钥 | 单一密钥 | 公钥+私钥对 |
+| 速度 | 最快 | 快 | 慢 |
+| 用途 | 密码存储、数据校验 | 数据传输加密 | 密钥交换、数字签名 |
+
+**哈希加密的优点**：
+1. **计算速度快**：无需复杂的数学运算
+2. **安全性高**：即使数据库泄露，也无法从哈希值还原明文
+3. **固定长度输出**：便于存储和比较
+4. **雪崩效应**：输入微小变化导致输出巨大变化
+
+**追问**：为什么密码存储要加盐？
+- 防止彩虹表攻击
+- 相同密码产生不同哈希值
+- 增加破解成本
+
+---
+
+### Q2: 你知道享元模式吗？
+
+**参考答案**：
+
+享元模式（Flyweight）是一种结构型设计模式，通过共享对象来减少内存占用。
+
+**核心思想**：
+- 将对象的状态分为**内部状态**（可共享）和**外部状态**（不可共享）
+- 多个对象共享相同的内部状态，减少对象创建数量
+
+**适用场景**：
+- 系统中有大量相似对象
+- 对象的大部分状态可以外部化
+- 需要缓冲池的场景
+
+**代码示例**：
+```java
+// 享元工厂
+public class UserFlyweight {
+    private static Map<String, UserInfo> cache = new HashMap<>();
+    
+    public static UserInfo getUserInfo(String userId) {
+        return cache.computeIfAbsent(userId, id -> loadFromDB(id));
+    }
+}
+```
+
+**在论坛项目中的应用**：
+- 用户头像、用户名等频繁访问的数据
+- 作为享元对象存入 Redis 缓存
+- 减少数据库查询和内存占用
+
+---
+
+### Q3: HTTP 请求数据逐层传输的过程？
+
+**参考答案**：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     数据封装过程                             │
+├─────────────────────────────────────────────────────────────┤
+│  应用层    HTTP 报文（请求方法、请求头、请求体）              │
+│     ↓                                                       │
+│  传输层    TCP 数据段（添加 TCP 头部：端口号、序列号）        │
+│     ↓                                                       │
+│  网络层    IP 数据报（添加 IP 头部：源IP、目的IP）           │
+│     ↓                                                       │
+│  链路层    以太网帧（添加帧头：MAC 地址、帧尾：校验信息）     │
+│     ↓                                                       │
+│  物理层    二进制比特流传输                                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**各层作用**：
+1. **应用层**：构造 HTTP 请求报文
+2. **传输层**：TCP 三次握手建立连接，封装端口信息
+3. **网络层**：IP 协议负责寻址和路由
+4. **链路层**：MAC 地址定位下一跳设备
+5. **物理层**：转换为电信号/光信号传输
+
+---
+
+### Q4: 网络层如何找到下一跳？RIP 和 OSPF 协议？
+
+**参考答案**：
+
+**路由选择原理**：
+- 路由器维护路由表，记录目的网络和下一跳地址
+- 通过路由协议动态更新路由表
+
+**RIP 协议（距离向量）**：
+- 基于跳数计算距离，最大 15 跳
+- 定期广播整个路由表
+- 收敛慢，适用于小型网络
+- 缺点：计数到无穷大问题
+
+**OSPF 协议（链路状态）**：
+- 每个路由器维护网络拓扑图
+- 使用 Dijkstra 算法计算最短路径
+- 收敛快，适用于大型网络
+- 支持区域划分，减少路由表大小
+
+**对比**：
+| 特性 | RIP | OSPF |
+|------|-----|------|
+| 算法 | 距离向量 | 链路状态 |
+| 度量 | 跳数 | 带宽、延迟等 |
+| 收敛速度 | 慢（分钟级） | 快（秒级） |
+| 网络规模 | 小型（<15跳） | 大型 |
+| 资源消耗 | 低 | 高 |
+
+---
+
+### Q5: 合同表如何设计？（场景题）
+
+**题目描述**：
+一个合同会和很多个应用关联，如何设计数据库表？
+
+**参考答案**：
+
+**方案：三表设计**
+
+```sql
+-- 1. 合同表
+CREATE TABLE contract (
+    id BIGINT PRIMARY KEY,
+    contract_name VARCHAR(100),
+    amount DECIMAL(10,2),
+    sign_date DATE,
+    -- 其他合同字段
+);
+
+-- 2. 应用表
+CREATE TABLE application (
+    id BIGINT PRIMARY KEY,
+    app_name VARCHAR(100),
+    app_type VARCHAR(50),
+    -- 其他应用字段
+);
+
+-- 3. 合同-应用关联表（多对多）
+CREATE TABLE contract_app_relation (
+    id BIGINT PRIMARY KEY,
+    contract_id BIGINT,
+    app_id BIGINT,
+    created_at DATETIME,
+    FOREIGN KEY (contract_id) REFERENCES contract(id),
+    FOREIGN KEY (app_id) REFERENCES application(id)
+);
+```
+
+**查询示例**：查询金额最高的 5 个合同及其关联应用
+```sql
+SELECT c.*, GROUP_CONCAT(a.app_name) as apps
+FROM contract c
+LEFT JOIN contract_app_relation r ON c.id = r.contract_id
+LEFT JOIN application a ON r.app_id = a.id
+GROUP BY c.id
+ORDER BY c.amount DESC
+LIMIT 5;
+```
+
+**事务一致性**：
+```java
+@Transactional
+public void createContractWithApps(ContractDTO dto) {
+    // 1. 插入合同
+    contractMapper.insert(dto.getContract());
+    // 2. 插入关联关系
+    for (Long appId : dto.getAppIds()) {
+        relationMapper.insert(dto.getContract().getId(), appId);
+    }
+}
+```
+
+---
+
+### Q6: 手撕算法 - 反转链表 II
+
+**题目**：反转链表从位置 m 到 n 的部分
+
+**参考解答**：
+```java
+public ListNode reverseBetween(ListNode head, int m, int n) {
+    ListNode dummy = new ListNode(0);
+    dummy.next = head;
+    ListNode pre = dummy;
+    
+    // 1. 找到 m 的前一个节点
+    for (int i = 1; i < m; i++) {
+        pre = pre.next;
+    }
+    
+    // 2. 反转 m 到 n 的节点
+    ListNode cur = pre.next;
+    for (int i = m; i < n; i++) {
+        ListNode next = cur.next;
+        cur.next = next.next;
+        next.next = pre.next;
+        pre.next = next;
+    }
+    
+    return dummy.next;
+}
+```
+
+**时间复杂度**：O(n)
+**空间复杂度**：O(1)
+
+---
+
+**面试总结**：
+- 阿里云一面重视项目深挖和基础扎实
+- 计网八股要背熟（特别是 TCP/IP 各层）
+- 手撕算法选自己有把握的难度
+- SQL JOIN 要熟练

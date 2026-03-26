@@ -1396,3 +1396,361 @@ if (bloomFilter.contains("user:1001")) {
 ---
 
 **面试总结**：AI 方向考察较多，项目驱动型面试，建议 RAG/MCP 相关项目准备充分。
+
+---
+
+## 十、2026 腾讯 Java 一面真题
+
+> 来源：牛客网 2026-03
+> 特点：基础扎实 + 手撕 + 场景设计
+
+### Q1: Java 基本数据类型和包装类型的区别？
+
+**参考答案**：
+
+| 类型 | 基本类型 | 包装类型 |
+|------|---------|---------|
+| 存储 | 栈内存 | 堆内存 |
+| 默认值 | 0/false/\\u0000 | null |
+| 比较 | == 比较值 | equals 比较值，== 比较引用 |
+| 泛型 | 不支持 | 支持 |
+
+**自动装箱/拆箱**：
+```java
+Integer a = 100;  // 自动装箱：Integer.valueOf(100)
+int b = a;        // 自动拆箱：a.intValue()
+```
+
+**Integer 缓存坑**：
+```java
+Integer x = 127;
+Integer y = 127;
+System.out.println(x == y);  // true（缓存范围内）
+
+Integer m = 128;
+Integer n = 128;
+System.out.println(m == n);  // false（超出缓存范围）
+```
+
+**缓存范围**：-128 ~ 127
+
+---
+
+### Q2: equals 和 == 的区别？为什么要同时重写 hashCode？
+
+**参考答案**：
+
+**equals vs ==**：
+- `==`：比较地址值（引用类型）或值（基本类型）
+- `equals`：默认比较地址，重写后比较内容
+
+**为什么重写 equals 必须重写 hashCode**？
+
+**原因**：Java 约定：equals 相等的对象，hashCode 必须相等。
+
+**反例**：
+```java
+public class Person {
+    String name;
+    
+    @Override
+    public boolean equals(Object o) {
+        return name.equals(((Person) o).name);
+    }
+    // 不重写 hashCode
+}
+
+Set<Person> set = new HashSet<>();
+set.add(new Person("Tom"));
+set.add(new Person("Tom"));
+// 结果：set.size() = 2（错误！应该为 1）
+```
+
+**正确做法**：
+```java
+@Override
+public int hashCode() {
+    return Objects.hash(name);
+}
+```
+
+---
+
+### Q3: 接口和抽象类的区别？什么时候用哪个？
+
+**参考答案**：
+
+| 特性 | 接口 | 抽象类 |
+|------|------|--------|
+| 继承 | 多实现 | 单继承 |
+| 构造器 | 无 | 有 |
+| 成员变量 | public static final | 任意 |
+| 方法 | 默认 public | 可有各种访问级别 |
+| 设计目的 | 定义行为契约 | 代码复用 + 模板 |
+
+**使用场景**：
+- **用接口**：定义行为规范、多态、解耦
+- **用抽象类**：有公共实现、模板方法模式
+
+**示例**：
+```java
+// 接口：定义"能飞"的行为
+interface Flyable {
+    void fly();
+}
+
+// 抽象类：鸟类公共实现
+abstract class Bird {
+    protected String name;
+    
+    void eat() { /* 公共实现 */ }
+    abstract void sing();  // 子类实现
+}
+
+// 具体类
+class Sparrow extends Bird implements Flyable {
+    @Override void sing() { }
+    @Override public void fly() { }
+}
+```
+
+---
+
+### Q4: synchronized 和 ReentrantLock 的区别？
+
+**参考答案**：
+
+| 特性 | synchronized | ReentrantLock |
+|------|-------------|---------------|
+| 实现 | JVM 关键字 | Java 类 |
+| 释放锁 | 自动释放 | 手动 unlock() |
+| 公平性 | 非公平 | 可选公平/非公平 |
+| 中断 | 不可中断 | 可中断 lockInterruptibly() |
+| 条件变量 | 单一条件 | 多 Condition |
+
+**代码对比**：
+```java
+// synchronized
+synchronized (obj) {
+    // 临界区
+}
+
+// ReentrantLock
+lock.lock();
+try {
+    // 临界区
+} finally {
+    lock.unlock();  // 必须手动释放
+}
+```
+
+**使用建议**：
+- 简单场景用 synchronized
+- 需要公平锁、可中断、多条件时用 ReentrantLock
+
+---
+
+### Q5: volatile 为什么能保证可见性但不能保证原子性？
+
+**参考答案**：
+
+**可见性原理**：
+- 写操作：强制刷新到主内存
+- 读操作：从主内存读取最新值
+- 底层：内存屏障（Memory Barrier）
+
+**不能保证原子性的原因**：
+
+**反例**：
+```java
+volatile int count = 0;
+
+// 两个线程同时执行 count++
+// count++ 实际是 3 步：读取 → 加 1 → 写回
+// 可能发生：线程 A 读取 count=0，线程 B 也读取 count=0
+// 结果：两个线程都写回 1，期望是 2
+```
+
+**解决方案**：
+```java
+// 方案 1：AtomicInteger
+AtomicInteger count = new AtomicInteger(0);
+count.incrementAndGet();  // 原子操作
+
+// 方案 2：synchronized
+synchronized void increment() {
+    count++;
+}
+```
+
+---
+
+### Q6: 手写生产者消费者模型
+
+**参考答案**：
+
+```java
+public class ProducerConsumer {
+    private final Queue<Integer> queue = new LinkedList<>();
+    private final int MAX_SIZE = 10;
+    
+    public void produce() throws InterruptedException {
+        synchronized (queue) {
+            while (queue.size() == MAX_SIZE) {
+                queue.wait();  // 队列满，等待
+            }
+            queue.offer(1);
+            System.out.println("生产: " + queue.size());
+            queue.notifyAll();  // 唤醒消费者
+        }
+    }
+    
+    public void consume() throws InterruptedException {
+        synchronized (queue) {
+            while (queue.isEmpty()) {
+                queue.wait();  // 队列空，等待
+            }
+            queue.poll();
+            System.out.println("消费: " + queue.size());
+            queue.notifyAll();  // 唤醒生产者
+        }
+    }
+}
+```
+
+**关键点**：
+- 使用 `wait()` 而不是 `sleep()`
+- 使用 `while` 判断条件，防止虚假唤醒
+- 使用 `notifyAll()` 而不是 `notify()`
+
+---
+
+### Q7: 设计一个限流系统
+
+**参考答案**：
+
+**方案 1：令牌桶算法**
+```java
+public class TokenBucket {
+    private final int capacity;      // 桶容量
+    private final int rate;          // 生成速率（个/秒）
+    private int tokens;              // 当前令牌数
+    private long lastTime;           // 上次生成时间
+    
+    public synchronized boolean allow() {
+        long now = System.currentTimeMillis();
+        // 补充令牌
+        tokens = Math.min(capacity, tokens + (int)((now - lastTime) / 1000.0 * rate));
+        lastTime = now;
+        
+        if (tokens > 0) {
+            tokens--;
+            return true;
+        }
+        return false;
+    }
+}
+```
+
+**方案 2：Redis 分布式限流**
+```lua
+-- Lua 脚本保证原子性
+local key = KEYS[1]
+local limit = tonumber(ARGV[1])
+local current = tonumber(redis.call('get', key) or "0")
+if current < limit then
+    redis.call('INCR', key)
+    redis.call('EXPIRE', key, 1)  -- 1秒过期
+    return 1
+else
+    return 0
+end
+```
+
+---
+
+### Q8: 手写 LRU 缓存
+
+**参考答案**：
+
+```java
+public class LRUCache<K, V> {
+    private final int capacity;
+    private final Map<K, Node<K, V>> map;
+    private final Node<K, V> head, tail;
+    
+    static class Node<K, V> {
+        K key;
+        V value;
+        Node<K, V> prev, next;
+        Node(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+    
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        this.map = new HashMap<>();
+        head = new Node<>(null, null);
+        tail = new Node<>(null, null);
+        head.next = tail;
+        tail.prev = head;
+    }
+    
+    public V get(K key) {
+        Node<K, V> node = map.get(key);
+        if (node == null) return null;
+        moveToHead(node);
+        return node.value;
+    }
+    
+    public void put(K key, V value) {
+        Node<K, V> node = map.get(key);
+        if (node != null) {
+            node.value = value;
+            moveToHead(node);
+        } else {
+            node = new Node<>(key, value);
+            map.put(key, node);
+            addToHead(node);
+            if (map.size() > capacity) {
+                Node<K, V> removed = removeTail();
+                map.remove(removed.key);
+            }
+        }
+    }
+    
+    private void moveToHead(Node<K, V> node) {
+        removeNode(node);
+        addToHead(node);
+    }
+    
+    private void addToHead(Node<K, V> node) {
+        node.prev = head;
+        node.next = head.next;
+        head.next.prev = node;
+        head.next = node;
+    }
+    
+    private void removeNode(Node<K, V> node) {
+        node.prev.next = node.next;
+        node.next.prev = node.prev;
+    }
+    
+    private Node<K, V> removeTail() {
+        Node<K, V> node = tail.prev;
+        removeNode(node);
+        return node;
+    }
+}
+```
+
+**时间复杂度**：O(1) get 和 put
+
+---
+
+**面试总结**：
+- 腾讯一面覆盖面广，基础、JVM、并发、设计题都有
+- synchronized 底层原理要能讲清楚
+- 手撕代码要熟练，LRU 是高频题
