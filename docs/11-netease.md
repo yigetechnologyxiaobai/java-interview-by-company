@@ -748,4 +748,153 @@ jdbcTemplate.query("SELECT * FROM user", (rs, rowNum) -> {
 
 ---
 
+## 九、2026 面经真题
+
+> 来源：牛客网 2026
+> 特点：分布式 + 多线程深入
+
+### Q1: 分布式事务解决方案？
+
+**参考答案**：
+
+| 方案 | 原理 | 适用场景 |
+|------|------|---------|
+| 2PC | 两阶段提交 | 强一致性要求高 |
+| TCC | Try-Confirm-Cancel | 业务逻辑可控 |
+| 本地消息表 | 消息 + 定时任务 | 最终一致性 |
+| Seata | AT/TCC/Saga 模式 | 灵活可选 |
+
+**Seata AT 模式**：
+```java
+@GlobalTransactional
+public void placeOrder() {
+    // 1. 扣库存
+    storageService.deduct();
+    // 2. 创建订单
+    orderService.create();
+    // Seata 自动管理全局事务
+}
+```
+
+---
+
+### Q2: 分布式锁实现方案？
+
+**参考答案**：
+
+| 方案 | 优点 | 缺点 |
+|------|------|------|
+| Redis（setnx） | 简单、高性能 | 需要处理超时、续期 |
+| Redisson | 功能完善、自动续期 | 依赖 Redis |
+| ZooKeeper | 强一致性 | 性能较低、复杂 |
+| etcd | 高可用、强一致 | 运维成本高 |
+
+**Redisson 分布式锁**：
+```java
+RLock lock = redisson.getLock("order:" + orderId);
+try {
+    lock.lock(30, TimeUnit.SECONDS);  // 自动续期
+    // 业务逻辑
+} finally {
+    lock.unlock();
+}
+```
+
+---
+
+### Q3: 线程池调优经验？
+
+**参考答案**：
+
+**参数设置**：
+```java
+ThreadPoolExecutor executor = new ThreadPoolExecutor(
+    Runtime.getRuntime().availableProcessors(),      // 核心线程数
+    Runtime.getRuntime().availableProcessors() * 2,  // 最大线程数
+    60L, TimeUnit.SECONDS,                            // 空闲时间
+    new LinkedBlockingQueue<>(1000),                  // 队列容量
+    new ThreadPoolExecutor.CallerRunsPolicy()         // 拒绝策略
+);
+```
+
+**监控指标**：
+- `getActiveCount()`：活跃线程数
+- `getQueue().size()`：队列长度
+- `getCompletedTaskCount()`：完成任务数
+- `getPoolSize()`：当前线程数
+
+---
+
+### Q4: Kafka 消息丢失怎么解决？
+
+**参考答案**：
+
+| 阶段 | 问题 | 解决方案 |
+|------|------|---------|
+| 生产者 | 发送失败 | acks=all + retries |
+| Broker | 宕机丢失 | 多副本 + min.insync.replicas |
+| 消费者 | 处理失败 | 手动提交 offset |
+
+**生产者配置**：
+```properties
+acks=all                          # 等待所有副本确认
+retries=3                         # 重试次数
+enable.idempotence=true           # 幂等性
+max.in.flight.requests.per.connection=5  # 最大并发请求数
+```
+
+---
+
+### Q5: Netty 线程模型？
+
+**参考答案**：
+
+```
+┌─────────────────────────────────────────┐
+│            Boss Group（1个线程）          │
+│    负责 Accept 连接，注册到 Worker Group   │
+└─────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────┐
+│          Worker Group（N个线程）          │
+│    负责处理 I/O 事件（读、写）              │
+└─────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────┐
+│          ChannelPipeline                 │
+│    Handler 链式处理（编解码、业务逻辑）      │
+└─────────────────────────────────────────┘
+```
+
+**Reactor 模式**：
+- 单 Reactor 单线程：简单，但无法利用多核
+- 单 Reactor 多线程：Handler 使用线程池
+- 主从 Reactor：Boss + Worker 分离
+
+---
+
+### Q6: Spring 中的设计模式？
+
+**参考答案**：
+
+| 模式 | Spring 应用 |
+|------|------------|
+| 工厂模式 | BeanFactory、ApplicationContext |
+| 单例模式 | Bean 默认单例 |
+| 代理模式 | AOP（JDK 动态代理、CGLIB） |
+| 模板方法 | JdbcTemplate、RestTemplate |
+| 策略模式 | Resource 加载策略 |
+| 观察者模式 | ApplicationEvent、ApplicationListener |
+| 适配器模式 | HandlerAdapter |
+| 装饰器模式 | BeanWrapper |
+
+---
+
+**面试总结**：
+- 网易重视分布式系统设计
+- 多线程和并发编程深入考察
+- Spring 框架原理要熟悉
+
+---
+
 [返回目录](../README.md)
