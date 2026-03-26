@@ -119,10 +119,42 @@
 
 ## 九、2026 新增：AI工程化方向（部分团队已考）
 
-1. 大模型推理加速了解吗？（量化、蒸馏、LoRA）
-2. RAG（Retrieval-Augmented Generation）原理？向量数据库怎么选？
-3. Agent 框架用过吗？LangChain / LlamaIndex？
-4. Prompt Engineering 常见技巧？few-shot / chain-of-thought
+### RAG 系统架构设计
+1. RAG 原理是什么？为什么要用 RAG？
+2. 向量数据库如何选型？Milvus / Pinecone / Chroma 区别？
+3. Embedding 模型怎么选？文本向量化、多模态嵌入
+4. 检索优化策略？混合检索（向量+关键词）、MMR 去重
+5. 文档切片策略如何设计？
+6. 如何处理长上下文超出限制的问题？
+7. 如何评估 RAG 系统的效果？
+
+### Agent 系统设计
+8. Agent 核心组件有哪些？
+   - Planning：任务分解、反思迭代
+   - Memory：短期记忆（对话历史）、长期记忆（向量库）
+   - Tools：函数调用、API 集成、代码执行
+   - Action：执行引擎、结果解析
+9. Agent 框架对比：LangChain / AutoGen / Dify / AgentScope
+10. 如何解决 Agent 的幻觉问题？
+11. 多轮对话中如何维护上下文？
+12. 如何评估 Agent 任务完成的质量？
+
+### MCP vs Skill 协议
+13. MCP（Model Context Protocol）是什么？解决什么问题？
+14. Skill 协议与 MCP 的区别？
+15. OpenClaw 的 Skill 机制了解吗？
+
+### AI 应用工程挑战
+16. 首字延迟（TTFT）如何降低？
+17. LLM 服务不稳定时的降级策略？
+18. 敏感信息如何脱敏？私有化部署方案？
+19. 如何设计 Prompt 版本管理和 AB 测试？
+20. 如何防止 Prompt 注入攻击？
+21. 如何建立自动化评估体系？
+
+### 大模型推理优化
+22. 推理加速技术了解吗？（量化、蒸馏、LoRA）
+23. Prompt Engineering 常见技巧？few-shot / chain-of-thought
 
 ---
 
