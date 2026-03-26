@@ -701,4 +701,56 @@ private int partition(int[] arr, int left, int right) {
 
 ---
 
+## 九、2026 面经真题
+
+> 来源：牛客网 2026-03
+> 特点：多线程深入 + Redis 实战
+
+### Q1: 线程池核心参数？如何设置？
+
+**参考答案**：
+
+```java
+ThreadPoolExecutor(
+    int corePoolSize,      // 核心线程数
+    int maximumPoolSize,   // 最大线程数
+    long keepAliveTime,    // 非核心线程存活时间
+    TimeUnit unit,         // 时间单位
+    BlockingQueue<Runnable> workQueue,  // 任务队列
+    ThreadFactory threadFactory,        // 线程工厂
+    RejectedExecutionHandler handler    // 拒绝策略
+)
+```
+
+**参数设置建议**：
+- **CPU 密集型**：corePoolSize = CPU 核心数 + 1
+- **IO 密集型**：corePoolSize = CPU 核心数 × (1 + 等待时间/计算时间)
+- **混合型**：拆分为 CPU 密集和 IO 密集两个线程池
+
+---
+
+### Q2: Redis 数据类型及应用场景？
+
+| 类型 | 场景 |
+|------|------|
+| String | 缓存、计数器、分布式锁 |
+| Hash | 用户信息、商品信息 |
+| List | 消息队列、最新列表 |
+| Set | 标签、共同关注 |
+| ZSet | 排行榜、延时队列 |
+
+---
+
+### Q3: 智力题 - 找异常球
+
+**题目**：12 个球，11 个重量相同，1 个异常（可能重可能轻），用天平找出来。
+
+**思路**：
+1. 分 3 组：A(4)、B(4)、C(4)
+2. A vs B：若平衡，异常在 C；若不平，异常在轻/重的一组
+3. 取可疑组的 3 个球 vs 正常球比较...
+4. 最多 3 次可找出
+
+---
+
 [返回目录](../README.md)
