@@ -525,4 +525,188 @@ ThreadPoolExecutor(
 
 ---
 
+## 十一、2026 Java 面经真题
+
+> 来源：牛客网 2026-03
+> 特点：项目深挖 + 分布式锁 + 场景题
+
+### 一面真题
+
+#### Q1: 分布式锁如何实现？锁误删怎么解决？
+
+**参考答案**：
+
+**Redis 分布式锁**：
+```java
+// 加锁
+String lockKey = "lock:" + resourceId;
+String requestId = UUID.randomUUID().toString();
+Boolean acquired = redis.set(lockKey, requestId, "NX", "EX", 30);
+
+// 解锁（Lua 脚本保证原子性）
+String script = "if redis.call('get', KEYS[1]) == ARGV[1] then " +
+                "return redis.call('del', KEYS[1]) else return 0 end";
+redis.eval(script, Collections.singletonList(lockKey), requestId);
+```
+
+**锁误删问题**：
+- 线程 A 获取锁，执行时间超过过期时间
+- 锁自动释放，线程 B 获取锁
+- 线程 A 执行完毕，删除了 B 的锁
+
+**解决方案**：
+1. **看门狗机制**：自动续期
+   ```java
+   // Redisson 看门狗
+   RLock lock = redisson.getLock("myLock");
+   lock.lock();  // 默认 30s，每 10s 续期一次
+   ```
+
+2. **value 存唯一标识**：解锁时校验
+   ```java
+   if (requestId.equals(redis.get(lockKey))) {
+       redis.del(lockKey);
+   }
+   ```
+
+---
+
+#### Q2: 缓存穿透、雪崩、击穿？
+
+**参考答案**：
+
+| 问题 | 原因 | 解决方案 |
+|------|------|---------|
+| 穿透 | 查询不存在的数据 | 布隆过滤器、空值缓存 |
+| 雪崩 | 大量缓存同时失效 | 随机过期时间、多级缓存 |
+| 击穿 | 热点 Key 过期 | 互斥锁、永不过期 |
+
+**穿透解决**：
+```java
+public Object query(String key) {
+    Object value = redis.get(key);
+    if (value != null) {
+        return "NULL".equals(value) ? null : value;
+    }
+    
+    // 布隆过滤器判断
+    if (!bloomFilter.mightContain(key)) {
+        return null;  // 一定不存在
+    }
+    
+    // 查数据库
+    value = db.query(key);
+    if (value == null) {
+        redis.set(key, "NULL", 60);  // 空值缓存
+    } else {
+        redis.set(key, value, 300);
+    }
+    return value;
+}
+```
+
+---
+
+#### Q3: synchronized 和 Lock 的区别？
+
+**参考答案**：
+
+| 特性 | synchronized | Lock |
+|------|-------------|------|
+| 实现 | JVM 关键字 | Java 类 |
+| 释放 | 自动 | 手动 unlock() |
+| 公平性 | 非公平 | 可选 |
+| 中断 | 不可 | lockInterruptibly() |
+| 条件变量 | 单一 | 多 Condition |
+
+**使用场景**：
+- 简单同步：synchronized
+- 需要公平锁、可中断、多条件：ReentrantLock
+
+---
+
+#### Q4: 同一用户并发下单如何加锁？
+
+**参考答案**：
+
+**方案 1：synchronized 锁字符串**：
+```java
+synchronized (userId.intern()) {  // intern() 返回常量池引用
+    // 下单逻辑
+}
+```
+
+**问题**：字符串常量池有限，可能导致内存问题。
+
+**方案 2：分段锁**：
+```java
+public class SegmentLock {
+    private final Object[] locks;
+    
+    public SegmentLock(int segments) {
+        locks = new Object[segments];
+        for (int i = 0; i < segments; i++) {
+            locks[i] = new Object();
+        }
+    }
+    
+    public Object getLock(String key) {
+        int index = Math.abs(key.hashCode()) % locks.length;
+        return locks[index];
+    }
+}
+
+// 使用
+synchronized (segmentLock.getLock(userId)) {
+    // 下单逻辑
+}
+```
+
+---
+
+#### Q5: 算法题 - 复原 IP 地址
+
+**题目**：给定字符串，返回所有可能的 IP 地址组合。
+
+**参考解答**：
+```java
+public List<String> restoreIpAddresses(String s) {
+    List<String> result = new ArrayList<>();
+    backtrack(s, 0, 0, new ArrayList<>(), result);
+    return result;
+}
+
+private void backtrack(String s, int start, int segments, 
+                       List<String> path, List<String> result) {
+    if (segments == 4 && start == s.length()) {
+        result.add(String.join(".", path));
+        return;
+    }
+    
+    for (int len = 1; len <= 3 && start + len <= s.length(); len++) {
+        String part = s.substring(start, start + len);
+        if (isValid(part)) {
+            path.add(part);
+            backtrack(s, start + len, segments + 1, path, result);
+            path.remove(path.size() - 1);
+        }
+    }
+}
+
+private boolean isValid(String part) {
+    if (part.length() > 1 && part.charAt(0) == '0') return false;
+    int num = Integer.parseInt(part);
+    return num >= 0 && num <= 255;
+}
+```
+
+---
+
+**面试总结**：
+- 美团重视项目深挖，分布式场景题多
+- 分布式锁、缓存三兄弟是必考
+- 算法题偏中等，但要求手写完整
+
+---
+
 [返回目录](../README.md)

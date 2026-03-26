@@ -1188,4 +1188,219 @@ RDB（全量）+ AOF（增量）
 
 ---
 
+## 八、2026 Java 面经真题
+
+> 来源：牛客网 2026-05
+> 特点：两面连着面，项目 + 八股 + 算法
+
+### 一面真题
+
+#### Q1: 让你实现一个 HashMap，你会如何设计？
+
+**参考答案**：
+
+1. **核心数据结构**：
+   - 数组 + 链表 + 红黑树（JDK 1.8+）
+   - 初始容量 16，负载因子 0.75
+
+2. **哈希函数**：
+   ```java
+   int hash = key.hashCode() ^ (key.hashCode() >>> 16);  // 扰动函数
+   int index = (n - 1) & hash;  // 位运算取模
+   ```
+
+3. **冲突解决**：
+   - 链地址法
+   - 链表长度 ≥ 8 且数组长度 ≥ 64 时转红黑树
+
+4. **扩容机制**：
+   - 当 size > threshold 时扩容 2 倍
+   - 重新计算元素位置（高位/低位分流）
+
+---
+
+#### Q2: synchronized 性能为什么提高了？
+
+**参考答案**：锁升级机制。
+
+```
+无锁 → 偏向锁 → 轻量级锁 → 重量级锁
+```
+
+| 锁状态 | 适用场景 | 性能 |
+|--------|---------|------|
+| 偏向锁 | 单线程访问 | 最高 |
+| 轻量级锁 | 交替执行 | 高 |
+| 重量级锁 | 竞争激烈 | 低 |
+
+**升级过程**：
+1. 偏向锁：对象头记录线程 ID
+2. 轻量级锁：CAS 自旋尝试获取
+3. 重量级锁：阻塞等待，OS 互斥量
+
+---
+
+#### Q3: HTTP 报文结构？头部有哪些字段？
+
+**请求报文**：
+```
+POST /api/user HTTP/1.1          // 请求行
+Host: www.example.com            // 请求头
+Content-Type: application/json
+Content-Length: 25
+
+{"name":"Tom","age":20}          // 请求体
+```
+
+**常见请求头**：
+- Host：目标主机
+- Content-Type：请求体类型
+- Authorization：认证信息
+- User-Agent：客户端信息
+- Accept：接受的内容类型
+
+**常见响应头**：
+- Content-Type：响应体类型
+- Set-Cookie：设置 Cookie
+- Cache-Control：缓存控制
+- Location：重定向地址
+
+---
+
+#### Q4: TCP 三次握手，TIME_WAIT 和 CLOSE_WAIT 的作用？
+
+**TIME_WAIT**：
+- 主动关闭方进入
+- 等待 2MSL（Maximum Segment Lifetime）
+- 作用：确保最后的 ACK 到达对方
+
+**CLOSE_WAIT**：
+- 被动关闭方进入
+- 等待应用层调用 close()
+- 大量 CLOSE_WAIT 说明代码没正确关闭连接
+
+**为什么是三次握手？**
+- 两次可能导致：失效的 SYN 到达服务端，服务端误建立连接
+- 三次确保双方都能确认对方的接收和发送能力
+
+---
+
+#### Q5: 算法题 - 表达式求值（+ - * /）
+
+**参考解答**：
+```java
+public int calculate(String s) {
+    Stack<Integer> stack = new Stack<>();
+    int num = 0;
+    char sign = '+';
+    
+    for (int i = 0; i < s.length(); i++) {
+        char c = s.charAt(i);
+        if (Character.isDigit(c)) {
+            num = num * 10 + (c - '0');
+        }
+        if (!Character.isDigit(c) && c != ' ' || i == s.length() - 1) {
+            switch (sign) {
+                case '+': stack.push(num); break;
+                case '-': stack.push(-num); break;
+                case '*': stack.push(stack.pop() * num); break;
+                case '/': stack.push(stack.pop() / num); break;
+            }
+            sign = c;
+            num = 0;
+        }
+    }
+    
+    int result = 0;
+    while (!stack.isEmpty()) result += stack.pop();
+    return result;
+}
+```
+
+**思路**：
+- 乘除法立即计算
+- 加减法入栈最后累加
+
+---
+
+### 二面真题
+
+#### Q1: HTTPS 整个过程？
+
+**参考答案**：
+
+```
+客户端                                服务端
+   |                                    |
+   | -------- Client Hello ----------> |  (支持的加密套件)
+   |                                    |
+   | <------- Server Hello ----------- |  (选择的加密套件)
+   | <------- Certificate ------------- |  (服务端证书)
+   |                                    |
+   | -------- Client Key Exchange ---> |  (预主密钥，用公钥加密)
+   | -------- Change Cipher Spec ----> |  (切换到加密通信)
+   | -------- Finished ---------------> |
+   |                                    |
+   | <------- Change Cipher Spec ----- |  (切换到加密通信)
+   | <------- Finished ---------------- |
+   |                                    |
+   | ======== 加密通信 ================ |
+```
+
+**对称 vs 非对称加密**：
+- 非对称加密：用于交换对称密钥（RSA、ECDHE）
+- 对称加密：用于实际数据传输（AES）
+
+---
+
+#### Q2: 死锁的条件和解决方法？
+
+**四个必要条件**：
+1. 互斥：资源只能被一个进程使用
+2. 请求保持：持有资源又请求新资源
+3. 不剥夺：不能强行剥夺资源
+4. 循环等待：存在循环等待链
+
+**解决方法**：
+- **预防**：破坏四个条件之一
+- **避免**：银行家算法
+- **检测**：资源分配图
+- **解除**：终止进程、剥夺资源
+
+---
+
+#### Q3: 算法题 - 最长公共连续子串
+
+**参考解答**：
+```java
+public int longestCommonSubstring(String s1, String s2) {
+    int m = s1.length(), n = s2.length();
+    int[][] dp = new int[m + 1][n + 1];
+    int maxLen = 0;
+    
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (s1.charAt(i - 1) == s2.charAt(j - 1)) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+                maxLen = Math.max(maxLen, dp[i][j]);
+            }
+        }
+    }
+    
+    return maxLen;
+}
+```
+
+**时间复杂度**：O(m × n)
+**空间复杂度**：O(m × n)
+
+---
+
+**面试总结**：
+- 字节两面连着面，共约 2 小时
+- 一面偏八股和基础，二面偏网络和算法
+- 面试官引导式提问，体验较好
+
+---
+
 [返回目录](../README.md)
