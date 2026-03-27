@@ -2370,3 +2370,177 @@ public void dijkstra(int[][] graph, int src) {
 - 计网八股要背熟（特别是 TCP/IP 各层）
 - 手撕算法选自己有把握的难度
 - SQL JOIN 要熟练
+
+---
+
+### 蚂蚁集团服务端研发一面面经（2026-01-07）
+
+**来源**：[牛客网](https://www.nowcoder.com/feed/main/detail/f59590be345d4ea1b1699a75298480aa)
+
+#### Q1: Java 和 Python 的区别？
+
+**参考答案**：
+
+| 特性 | Java | Python |
+|------|------|--------|
+| 类型系统 | 静态类型 | 动态类型 |
+| 运行方式 | 编译成字节码，JVM 运行 | 解释执行 |
+| 性能 | 较快（JIT 优化） | 较慢 |
+| 内存管理 | JVM 自动 GC | 引用计数 + GC |
+| 适用场景 | 企业级后端、大数据 | AI/ML、脚本、快速原型 |
+
+**个人理解**：
+```java
+// Java：强类型，编译期检查，适合大型项目
+public class User {
+    private String name;
+    private int age;
+    // IDE 自动补全、重构友好
+}
+```
+
+```python
+# Python：灵活，开发效率高，适合快速验证想法
+user = {"name": "test", "age": 20}  # 无需定义类
+```
+
+**追问**：
+- 为什么 Java 适合企业级开发？
+  - 类型安全、生态成熟、稳定性高
+- Python 的 GIL 是什么？
+  - 全局解释器锁，限制多线程并发
+
+---
+
+#### Q2: 说说线程池，核心线程、最大线程数、阻塞队列等概念
+
+**参考答案**：
+
+**线程池核心参数**：
+```java
+public ThreadPoolExecutor(
+    int corePoolSize,      // 核心线程数（常驻）
+    int maximumPoolSize,   // 最大线程数
+    long keepAliveTime,    // 非核心线程空闲存活时间
+    TimeUnit unit,         // 时间单位
+    BlockingQueue<Runnable> workQueue,  // 阻塞队列
+    ThreadFactory threadFactory,         // 线程工厂
+    RejectedExecutionHandler handler     // 拒绝策略
+)
+```
+
+**工作流程**：
+1. 任务提交，核心线程数未满 → 创建核心线程执行
+2. 核心线程已满，队列未满 → 任务入队等待
+3. 队列已满，线程数 < 最大线程数 → 创建非核心线程
+4. 线程数已达最大 → 执行拒绝策略
+
+**拒绝策略**：
+```java
+// AbortPolicy（默认）：抛异常
+// CallerRunsPolicy：调用者线程执行
+// DiscardPolicy：静默丢弃
+// DiscardOldestPolicy：丢弃队列最老任务
+```
+
+**追问**：
+- 如何设置核心线程数？
+  - CPU 密集型：核心数 + 1
+  - IO 密集型：核心数 * 2
+- 队列类型有哪些？
+  - ArrayBlockingQueue：有界数组
+  - LinkedBlockingQueue：可选有界链表
+  - SynchronousQueue：不存储，直接交接
+
+---
+
+#### Q3: JVM 编译加载类文件的流程？
+
+**参考答案**：
+
+**类加载过程**：
+```
+.java 源文件
+    ↓ javac 编译
+.class 字节码文件
+    ↓ 类加载器
+方法区（类信息）
+    ↓
+堆（Class 对象）
+```
+
+**类加载器层次**：
+```
+Bootstrap ClassLoader  ← 加载核心类（rt.jar）
+    ↓
+Extension ClassLoader  ← 加载扩展类（ext目录）
+    ↓
+Application ClassLoader ← 加载应用类（classpath）
+    ↓
+Custom ClassLoader      ← 自定义加载器
+```
+
+**双亲委派模型**：
+```java
+protected Class<?> loadClass(String name, boolean resolve) {
+    // 1. 检查是否已加载
+    // 2. 委托父加载器加载
+    // 3. 父加载器无法加载，自己加载
+}
+```
+
+**追问**：
+- 为什么要双亲委派？
+  - 避免核心类被篡改
+  - 避免类重复加载
+- 如何打破双亲委派？
+  - 自定义 ClassLoader，重写 loadClass 方法
+
+---
+
+#### Q4: 为什么选择 Flask？项目怎么部署到阿里云？
+
+**参考答案**：
+
+**Flask 选择理由**：
+1. **轻量级**：微框架，按需扩展
+2. **灵活性高**：不强制项目结构
+3. **适合小型项目/原型**：快速验证想法
+
+**阿里云部署流程**：
+```bash
+# 1. 购买 ECS 实例
+# 2. 安装环境
+sudo apt update
+sudo apt install python3 python3-pip nginx
+
+# 3. 上传代码
+scp -r ./project root@ecs-ip:/var/www/
+
+# 4. 配置 Gunicorn
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:8000 app:app
+
+# 5. Nginx 反向代理
+server {
+    listen 80;
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+    }
+}
+```
+
+**追问**：
+- Flask vs Django？
+  - Flask：灵活、轻量、适合小型项目
+  - Django：功能全、适合大型项目
+- 生产环境为什么用 Gunicorn？
+  - 多进程、性能好、稳定
+
+---
+
+**面试总结**：
+- 蚂蚁一面偏基础，未考算法
+- 项目会被深挖，要熟悉每个细节
+- Agent/RAG 方向是热门，相关项目加分
+- 目标学校 + 基础扎实 + 算法能力 + 项目深度
