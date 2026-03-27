@@ -1750,6 +1750,534 @@ public class LRUCache<K, V> {
 
 ---
 
+---
+
+## 三、2026 最新面经
+
+### 腾讯 Java 一面面经（2026-03-27）
+
+**来源**：[牛客网](https://www.nowcoder.com/discuss/801036113035931648)
+
+#### Q1: Java 基本数据类型和包装类型的区别？
+
+**参考答案**：
+
+**基本类型 vs 包装类型**：
+
+| 特性 | 基本类型 | 包装类型 |
+|------|---------|---------|
+| 存储 | 栈内存 | 堆内存 |
+| 默认值 | 0、false 等 | null |
+| 泛型支持 | 不支持 | 支持 |
+| 比较 | == 比较值 | == 比较引用，equals 比较值 |
+
+**自动装箱/拆箱**：
+```java
+Integer a = 100;     // 自动装箱：Integer.valueOf(100)
+int b = a;           // 自动拆箱：a.intValue()
+
+// 装箱陷阱
+Integer c = 100;
+Integer d = 100;
+System.out.println(c == d);  // true（缓存范围内）
+
+Integer e = 200;
+Integer f = 200;
+System.out.println(e == f);  // false（超出缓存范围）
+```
+
+**Integer 缓存机制**：
+```java
+// Integer.valueOf 源码
+public static Integer valueOf(int i) {
+    if (i >= IntegerCache.low && i <= IntegerCache.high)
+        return IntegerCache.cache[i + (-IntegerCache.low)];
+    return new Integer(i);
+}
+// 缓存范围：-128 到 127
+```
+
+**追问**：
+- 为什么要有包装类型？
+  - 泛型不支持基本类型
+  - 集合类只能存储对象
+  - 可以表示 null 值
+
+---
+
+#### Q2: equals 和 == 的区别？为什么要同时重写 hashCode？
+
+**参考答案**：
+
+**== vs equals**：
+
+| 比较方式 | 基本类型 | 引用类型 |
+|---------|---------|---------|
+| == | 比较值 | 比较内存地址 |
+| equals | 不适用 | 默认比较地址，可重写比较内容 |
+
+**为什么要重写 hashCode**：
+```java
+// 契约：equals 相等的对象，hashCode 必须相等
+// 反之不成立：hashCode 相等，equals 不一定相等
+
+public class User {
+    private String name;
+    private int age;
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return age == user.age && Objects.equals(name, user.name);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, age);
+    }
+}
+
+// 不重写 hashCode 的问题
+Set<User> set = new HashSet<>();
+User u1 = new User("张三", 20);
+User u2 = new User("张三", 20);
+set.add(u1);
+set.add(u2);  // 如果不重写 hashCode，两个都会被添加！
+```
+
+**HashMap 中的应用**：
+```
+1. 先计算 hashCode，定位桶位置
+2. 再用 equals 比较链表中的元素
+3. 如果只重写 equals，hashCode 不同会放到不同桶
+4. 导致 Set/Map 中出现重复元素
+```
+
+**追问**：
+- 为什么 JDK 7 后推荐用 Objects.equals()？
+  - 避免 NullPointerException
+  - `Objects.equals(null, null)` 返回 true
+
+---
+
+#### Q3: 接口和抽象类的区别？什么时候用哪个？
+
+**参考答案**：
+
+**对比表格**：
+
+| 特性 | 接口 | 抽象类 |
+|------|------|--------|
+| 多继承 | 支持（可多实现） | 不支持（单继承） |
+| 成员变量 | 只能是 public static final | 任意访问修饰符 |
+| 方法实现 | JDK 8 后支持 default/static | 可以有普通方法 |
+| 构造方法 | 无 | 有 |
+| 设计理念 | "像什么"（契约） | "是什么"（继承） |
+
+**使用场景**：
+
+```java
+// 接口：定义行为契约
+public interface Flyable {
+    void fly();
+}
+
+public interface Swimmable {
+    void swim();
+}
+
+// 可以同时实现多个接口
+public class Duck implements Flyable, Swimmable {
+    @Override
+    public void fly() { /* ... */ }
+    
+    @Override
+    public void swim() { /* ... */ }
+}
+
+// 抽象类：定义公共实现
+public abstract class Animal {
+    protected String name;
+    
+    public Animal(String name) {
+        this.name = name;
+    }
+    
+    // 模板方法
+    public final void dailyLife() {
+        eat();
+        sleep();
+        move();
+    }
+    
+    protected abstract void move();
+    
+    private void eat() { /* 通用实现 */ }
+    private void sleep() { /* 通用实现 */ }
+}
+```
+
+**选择原则**：
+1. **用接口**：需要多继承、定义行为契约、不关心实现细节
+2. **用抽象类**：需要共享代码、需要成员变量、需要构造方法
+
+**追问**：
+- JDK 8 接口的 default 方法有什么用？
+  - 向后兼容，新增方法不破坏已有实现
+- 抽象类可以没有抽象方法吗？
+  - 可以，用于禁止实例化
+
+---
+
+#### Q4: synchronized 和 ReentrantLock 的区别？
+
+**参考答案**：
+
+**对比表格**：
+
+| 特性 | synchronized | ReentrantLock |
+|------|-------------|---------------|
+| 层次 | JVM 关键字 | JDK API |
+| 释放锁 | 自动释放 | 手动 unlock() |
+| 公平性 | 非公平 | 可选公平/非公平 |
+| 条件变量 | 单一 | 多个 Condition |
+| 中断等待 | 不支持 | 支持 lockInterruptibly() |
+| 尝试获取 | 不支持 | 支持 tryLock() |
+
+**代码对比**：
+```java
+// synchronized
+public synchronized void method() {
+    // 临界区
+}
+
+// ReentrantLock
+private final ReentrantLock lock = new ReentrantLock();
+
+public void method() {
+    lock.lock();
+    try {
+        // 临界区
+    } finally {
+        lock.unlock();  // 必须手动释放
+    }
+}
+
+// ReentrantLock 高级功能
+public void advancedMethod() throws InterruptedException {
+    // 1. 尝试获取锁（非阻塞）
+    if (lock.tryLock(100, TimeUnit.MILLISECONDS)) {
+        try {
+            // 获取成功
+        } finally {
+            lock.unlock();
+        }
+    }
+    
+    // 2. 可中断获取锁
+    lock.lockInterruptibly();
+    try {
+        // 临界区
+    } finally {
+        lock.unlock();
+    }
+    
+    // 3. 多条件变量
+    Condition notFull = lock.newCondition();
+    Condition notEmpty = lock.newCondition();
+    
+    lock.lock();
+    try {
+        while (queue.isFull()) {
+            notFull.await();  // 等待不满
+        }
+        queue.add(item);
+        notEmpty.signal();    // 通知不为空
+    } finally {
+        lock.unlock();
+    }
+}
+```
+
+**选择建议**：
+- 简单同步：用 synchronized（代码简洁）
+- 高级功能：用 ReentrantLock（公平锁、条件变量、超时）
+
+**追问**：
+- synchronized 的锁升级过程？
+  - 无锁 → 偏向锁 → 轻量级锁 → 重量级锁
+- ReentrantLock 的实现原理？
+  - AQS（AbstractQueuedSynchronizer）
+
+---
+
+#### Q5: volatile 为什么能保证可见性但不能保证原子性？
+
+**参考答案**：
+
+**JMM 内存模型**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         主内存                                   │
+│                     共享变量 instance                            │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+          ▼                   ▼                   ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│   线程1 工作内存  │  │   线程2 工作内存  │  │   线程3 工作内存  │
+│   instance 副本  │  │   instance 副本  │  │   instance 副本  │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+**可见性保证**：
+```java
+// 没有 volatile
+boolean running = true;
+
+// 线程1
+while (running) {
+    // 可能永远不会停止！
+    // 因为线程1的工作内存中 running 一直是 true
+}
+
+// 线程2
+running = false;  // 修改主内存，但线程1可能看不到
+
+// 使用 volatile
+volatile boolean running = true;
+// volatile 保证：修改后立即刷新到主内存
+// 其他线程读取时从主内存重新加载
+```
+
+**不能保证原子性**：
+```java
+volatile int count = 0;
+
+// count++ 不是原子操作
+// 实际步骤：读取 → 加1 → 写入
+// 多线程并发时可能丢失更新
+
+public void increment() {
+    count++;  // 不安全！
+}
+
+// 正确做法
+public void increment() {
+    synchronized (this) {
+        count++;  // 安全
+    }
+}
+
+// 或使用 AtomicInteger
+AtomicInteger count = new AtomicInteger(0);
+count.incrementAndGet();  // 原子操作
+```
+
+**追问**：
+- volatile 的应用场景？
+  - 状态标志位
+  - 双重检查锁单例
+  - volatile Bean（读多写少）
+
+---
+
+#### Q6: 手写生产者消费者模型
+
+**参考答案**：
+
+**wait/notify 实现**：
+```java
+public class ProducerConsumer {
+    private final Queue<Integer> queue = new LinkedList<>();
+    private final int capacity = 10;
+    
+    public void produce() throws InterruptedException {
+        synchronized (queue) {
+            while (queue.size() == capacity) {
+                queue.wait();  // 队列满，等待
+            }
+            int item = new Random().nextInt(100);
+            queue.offer(item);
+            System.out.println("生产: " + item);
+            queue.notifyAll();  // 通知消费者
+        }
+    }
+    
+    public void consume() throws InterruptedException {
+        synchronized (queue) {
+            while (queue.isEmpty()) {
+                queue.wait();  // 队列空，等待
+            }
+            int item = queue.poll();
+            System.out.println("消费: " + item);
+            queue.notifyAll();  // 通知生产者
+        }
+    }
+}
+
+// 测试
+public static void main(String[] args) {
+    ProducerConsumer pc = new ProducerConsumer();
+    
+    new Thread(() -> {
+        while (true) {
+            try {
+                pc.produce();
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }).start();
+    
+    new Thread(() -> {
+        while (true) {
+            try {
+                pc.consume();
+                Thread.sleep(150);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }).start();
+}
+```
+
+**ReentrantLock + Condition 实现**：
+```java
+public class ProducerConsumerWithLock {
+    private final Queue<Integer> queue = new LinkedList<>();
+    private final int capacity = 10;
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition notFull = lock.newCondition();
+    private final Condition notEmpty = lock.newCondition();
+    
+    public void produce() throws InterruptedException {
+        lock.lock();
+        try {
+            while (queue.size() == capacity) {
+                notFull.await();
+            }
+            queue.offer(new Random().nextInt(100));
+            notEmpty.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+    
+    public void consume() throws InterruptedException {
+        lock.lock();
+        try {
+            while (queue.isEmpty()) {
+                notEmpty.await();
+            }
+            queue.poll();
+            notFull.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+```
+
+**追问**：
+- 为什么用 while 而不是 if 判断条件？
+  - 防止虚假唤醒
+  - 被唤醒后需要重新检查条件
+
+---
+
+#### Q7: 设计一个限流系统
+
+**参考答案**：
+
+**方案一：令牌桶算法**：
+```java
+public class TokenBucket {
+    private final long capacity;      // 桶容量
+    private final long rate;          // 放入速率（个/秒）
+    private long tokens;              // 当前令牌数
+    private long lastRefillTime;      // 上次补充时间
+    
+    public TokenBucket(long capacity, long rate) {
+        this.capacity = capacity;
+        this.rate = rate;
+        this.tokens = capacity;
+        this.lastRefillTime = System.currentTimeMillis();
+    }
+    
+    public synchronized boolean tryAcquire(long permits) {
+        refill();
+        if (tokens >= permits) {
+            tokens -= permits;
+            return true;
+        }
+        return false;
+    }
+    
+    private void refill() {
+        long now = System.currentTimeMillis();
+        long tokensToAdd = (now - lastRefillTime) / 1000 * rate;
+        tokens = Math.min(capacity, tokens + tokensToAdd);
+        lastRefillTime = now;
+    }
+}
+```
+
+**方案二：Redis 分布式限流**：
+```java
+// Lua 脚本保证原子性
+public boolean tryAcquire(String key, int limit, int window) {
+    String script = """
+        local current = redis.call('INCR', KEYS[1])
+        if current == 1 then
+            redis.call('EXPIRE', KEYS[1], ARGV[2])
+        end
+        return current <= tonumber(ARGV[1]) and 1 or 0
+        """;
+    
+    Long result = redisTemplate.execute(
+        new DefaultRedisScript<>(script, Long.class),
+        Collections.singletonList(key),
+        String.valueOf(limit),
+        String.valueOf(window)
+    );
+    
+    return result != null && result == 1;
+}
+```
+
+**方案三：Guava RateLimiter**：
+```java
+// 平滑突发限流
+RateLimiter limiter = RateLimiter.create(100);  // 每秒 100 个
+
+// 平滑预热限流（适合有预热需求的场景）
+RateLimiter warmLimiter = RateLimiter.create(100, 1, TimeUnit.SECONDS);
+
+// 使用
+if (limiter.tryAcquire()) {
+    // 获取成功，处理请求
+} else {
+    // 被限流
+    throw new RateLimitException();
+}
+```
+
+**追问**：
+- 令牌桶和漏桶的区别？
+  - 令牌桶：允许突发流量
+  - 漏桶：恒定速率流出
+- 分布式限流如何实现？
+  - Redis + Lua 脚本
+  - Sentinel、Hystrix
+
+---
+
 **面试总结**：
 - 腾讯一面覆盖面广，基础、JVM、并发、设计题都有
 - synchronized 底层原理要能讲清楚
