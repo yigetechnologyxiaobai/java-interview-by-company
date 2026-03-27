@@ -1403,4 +1403,376 @@ public int longestCommonSubstring(String s1, String s2) {
 
 ---
 
+## 四、2026 最新面经
+
+### 字节跳动一面面经（2026-03-27）
+
+**来源**：[牛客网](https://www.nowcoder.com/enterprise/665/interview)
+
+#### Q1: HTTPS 握手经过几个 RTT（Round Trip Time）？
+
+**参考答案**：
+
+HTTPS 握手过程包括 TCP 三次握手 + TLS 握手，总共需要 **2-3 个 RTT**。
+
+**详细流程**：
+
+```
+RTT 1: TCP 三次握手
+  客户端 ── SYN ──> 服务端
+  客户端 <── SYN+ACK ── 服务端
+  客户端 ── ACK ──> 服务端
+
+RTT 2: TLS 握手（以 TLS 1.2 为例）
+  客户端 ── ClientHello ──> 服务端
+  客户端 <── ServerHello + Certificate + ServerHelloDone ── 服务端
+
+RTT 3: TLS 握手完成
+  客户端 ── ClientKeyExchange + ChangeCipherSpec + Finished ──> 服务端
+  客户端 <── ChangeCipherSpec + Finished ── 服务端
+```
+
+**TLS 1.3 优化**：
+
+TLS 1.3 将握手过程优化为 **1-RTT**：
+
+```
+RTT 1: TCP + TLS 合并
+  客户端 ── SYN ──> 服务端
+  客户端 <── SYN+ACK ── 服务端
+  客户端 ── ACK + ClientHello + KeyShare ──> 服务端
+  客户端 <── ServerHello + Certificate + Finished ── 服务端
+```
+
+**代码示例**：查看 TLS 版本
+
+```bash
+# 使用 openssl 查看 TLS 版本
+openssl s_client -connect www.example.com:443 -tls1_3
+
+# 查看握手详情
+openssl s_client -connect www.example.com:443 -showcerts
+```
+
+**追问**：TLS 1.3 相比 TLS 1.2 有哪些改进？
+
+1. 握手从 2-RTT 减少到 1-RTT
+2. 移除了不安全的加密算法（如 RSA、CBC）
+3. 支持 0-RTT 恢复（有重放攻击风险）
+
+---
+
+#### Q2: Redis 跳表（SkipList）了解吗？为什么 MySQL 不用跳表而用 B+ 树？
+
+**参考答案**：
+
+**跳表结构**：
+
+跳表是在链表基础上改进的「多层」有序链表，能够快速定位数据。
+
+```
+Level 3: ────────────────────────►[50]────────────►NULL
+                                      │
+Level 2: ────►[20]───────────────►[50]────────────►NULL
+                  │                   │
+Level 1: ────►[20]────►[30]──────►[50]────►[60]──►NULL
+                  │         │         │        │
+Level 0: ►[10]►[20]►[25]►[30]►[40]►[50]►[60]►[70]►NULL
+```
+
+**查找过程**：
+- 查找 50：Level 0 → 20 → Level 1 → 50（3 步）
+- 时间复杂度：O(log n)
+- 空间复杂度：O(n)
+
+**为什么 MySQL 不用跳表**：
+
+| 维度 | B+ 树 | 跳表 |
+|------|-------|------|
+| 磁盘 IO | 3-4 层可存千万数据 | 层数过高，IO 次数多 |
+| 范围查询 | 叶子节点链表，高效 | 需要回到底层遍历 |
+| 空间利用率 | 非叶子节点只存键值 | 每层都需要存储指针 |
+
+**核心原因**：B+ 树的高度在 3 层时就能存储千万级别数据，而跳表维护同样数据量会导致层数过高，磁盘 IO 次数增多。
+
+**代码示例**：Redis Zset 跳表实现
+
+```c
+// Redis 跳表节点结构
+typedef struct zskiplistNode {
+    sds ele;                          // 成员对象
+    double score;                     // 分值
+    struct zskiplistNode *backward;   // 后退指针
+    struct zskiplistLevel {
+        struct zskiplistNode *forward; // 前进指针
+        unsigned long span;            // 跨度
+    } level[];                        // 层
+} zskiplistNode;
+```
+
+**追问**：为什么 Redis 使用跳表而不是红黑树？
+
+1. 实现简单，易于理解和维护
+2. 范围查询更高效（只需要遍历底层链表）
+3. 内存占用更可控（可以通过调整概率控制层数）
+4. 并发友好（锁粒度更细）
+
+---
+
+#### Q3: synchronized 支持重入吗？如何实现的？
+
+**参考答案**：
+
+synchronized 是**可重入锁**，同一个线程可以多次获取同一把锁。
+
+**实现原理**：
+
+每个对象的对象头中存储着锁状态和线程 ID：
+
+```
+对象头结构：
+┌─────────────────────────────────────────┐
+│  Mark Word (64 bits)                    │
+├─────────────────────────────────────────┤
+│  锁状态 | 线程ID | 锁计数器 | 其他       │
+└─────────────────────────────────────────┘
+
+偏向锁状态：
+┌─────────────────────────────────────────┐
+│  thread:23 | epoch:2 | age:4 | 1 | 01   │
+└─────────────────────────────────────────┘
+
+轻量级锁状态：
+┌─────────────────────────────────────────┐
+│  ptr_to_lock_record:62 | 00             │
+└─────────────────────────────────────────┘
+
+重量级锁状态：
+┌─────────────────────────────────────────┐
+│  ptr_to_heavyweight_monitor:62 | 10     │
+└─────────────────────────────────────────┘
+```
+
+**重入过程**：
+
+```java
+public class ReentrantDemo {
+    public synchronized void methodA() {
+        methodB();  // 再次获取同一把锁，计数器 +1
+    }
+    
+    public synchronized void methodB() {
+        // 执行完毕后，计数器 -1
+    }
+}
+```
+
+**底层实现**：
+
+1. **锁状态 = 0**：锁未被占用，CAS 获取锁，记录线程 ID
+2. **锁状态 ≠ 0 且线程 ID = 当前线程**：可重入，计数器 +1
+3. **锁状态 ≠ 0 且线程 ID ≠ 当前线程**：阻塞等待
+
+**释放锁**：
+- 每次退出 synchronized 方法/代码块，计数器 -1
+- 计数器 = 0 时，真正释放锁
+
+**代码示例**：验证可重入
+
+```java
+public class ReentrantTest {
+    private final Object lock = new Object();
+    
+    public void outer() {
+        synchronized (lock) {
+            System.out.println("outer");
+            inner();  // 可重入
+        }
+    }
+    
+    public void inner() {
+        synchronized (lock) {
+            System.out.println("inner");
+        }
+    }
+    
+    public static void main(String[] args) {
+        new ReentrantTest().outer();
+    }
+}
+// 输出：outer inner（不会死锁）
+```
+
+**追问**：synchronized 和 ReentrantLock 有什么区别？
+
+| 维度 | synchronized | ReentrantLock |
+|------|-------------|---------------|
+| 实现层级 | JVM 层面 | API 层面 |
+| 锁获取 | 自动 | 手动 lock()/unlock() |
+| 公平性 | 非公平 | 可选公平/非公平 |
+| 条件变量 | 单一 | 多个 Condition |
+| 响应中断 | 不支持 | 支持 lockInterruptibly() |
+
+---
+
+#### Q4: MySQL 间隙锁（Gap Lock）的原理？什么时候会加间隙锁？
+
+**参考答案**：
+
+**间隙锁定义**：
+
+Gap Lock 称为间隙锁，只存在于**可重复读（RR）隔离级别**，目的是解决幻读问题。
+
+**原理**：
+
+间隙锁锁住两个记录之间的间隙，防止其他事务在这个间隙中插入新记录。
+
+```
+假设表中有 id = 1, 5, 10 三条记录
+
+间隙锁范围：
+(-∞, 1), (1, 5), (5, 10), (10, +∞)
+
+如果事务 A 在 id = 5 上加间隙锁 (1, 5)
+则其他事务无法插入 id = 2, 3, 4 的记录
+```
+
+**什么时候加间隙锁**：
+
+当使用唯一索引进行等值查询，且**查询的记录不存在**时，会加间隙锁。
+
+```sql
+-- 假设表中有 id = 1, 5, 10
+-- 事务 A
+SELECT * FROM user WHERE id = 3 FOR UPDATE;
+
+-- 此时会加间隙锁 (1, 5)
+-- 事务 B 插入 id = 2, 3, 4 都会被阻塞
+INSERT INTO user (id, name) VALUES (3, 'test');  -- 阻塞
+```
+
+**间隙锁的特点**：
+
+1. 间隙锁之间**兼容**（两个事务可以同时持有同一间隙的间隙锁）
+2. 间隙锁目的是**防止插入**，不是防止读取
+3. 只存在于可重复读隔离级别
+
+**代码示例**：
+
+```sql
+-- 查看当前锁情况
+SELECT * FROM performance_schema.data_locks\G;
+
+-- 示例输出
+*************************** 1. row ***************************
+               ENGINE: INNODB
+       ENGINE_LOCK_ID: 140234567890:1070:140234567890
+ENGINE_TRANSACTION_ID: 4212345678901234
+            THREAD_ID: 45
+             EVENT_ID: 12
+        OBJECT_SCHEMA: test
+          OBJECT_NAME: user
+       PARTITION_NAME: NULL
+    SUBPARTITION_NAME: NULL
+             INDEX_NAME: PRIMARY
+OBJECT_INSTANCE_BEGIN: 140234567890
+            LOCK_TYPE: RECORD
+            LOCK_MODE: X,GAP              -- 间隙锁
+          LOCK_STATUS: GRANTED
+               LOCK_DATA: 5               -- 锁住 (1, 5) 间隙
+```
+
+**追问**：如何避免间隙锁？
+
+1. 使用读提交（RC）隔离级别
+2. 使用唯一索引查询存在的记录
+3. 使用主键查询
+
+---
+
+#### Q5: 算法题 - 重排链表
+
+**题目**：给定链表 1 → 2 → 3 → ... → n-1 → n，使用 O(1) 空间复杂度使其变为 1 → n → 2 → n-1 → ...
+
+**参考答案**：
+
+**思路**：
+1. 找到链表中点
+2. 反转后半部分
+3. 合并两个链表
+
+**代码实现**：
+
+```java
+public void reorderList(ListNode head) {
+    if (head == null || head.next == null) return;
+    
+    // 1. 找中点（快慢指针）
+    ListNode slow = head, fast = head;
+    while (fast.next != null && fast.next.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+    }
+    
+    // 2. 反转后半部分
+    ListNode second = reverse(slow.next);
+    slow.next = null;  // 断开
+    
+    // 3. 合并两个链表
+    ListNode first = head;
+    while (second != null) {
+        ListNode temp1 = first.next;
+        ListNode temp2 = second.next;
+        
+        first.next = second;
+        second.next = temp1;
+        
+        first = temp1;
+        second = temp2;
+    }
+}
+
+// 反转链表
+private ListNode reverse(ListNode head) {
+    ListNode prev = null, curr = head;
+    while (curr != null) {
+        ListNode next = curr.next;
+        curr.next = prev;
+        prev = curr;
+        curr = next;
+    }
+    return prev;
+}
+```
+
+**示例**：
+
+```
+输入：1 → 2 → 3 → 4 → 5
+       ↓
+中点：3
+       ↓
+反转：1 → 2 → 3, 5 → 4
+       ↓
+合并：1 → 5 → 2 → 4 → 3
+
+输入：1 → 2 → 3 → 4 → 5 → 6
+       ↓
+中点：3
+       ↓
+反转：1 → 2 → 3, 6 → 5 → 4
+       ↓
+合并：1 → 6 → 2 → 5 → 3 → 4
+```
+
+**复杂度分析**：
+- 时间复杂度：O(n)，遍历 3 次
+- 空间复杂度：O(1)，只使用常数空间
+
+**追问**：如果要求不能改变原链表结构怎么办？
+
+可以先复制链表再操作，或者使用递归（但空间复杂度变为 O(n)）。
+
+---
+
 [返回目录](../README.md)

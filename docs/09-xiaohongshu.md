@@ -858,4 +858,281 @@ public class Singleton {
 
 ---
 
+## 十一、2026 Java 一面真题（补充）
+
+> 来源：牛客网 2026-03
+> 特点：一面不问项目，八股为主，网络题多
+
+### 小红书 Java 一面面经（2026-03）
+
+**来源**：[小红书java面经](https://www.nowcoder.com/feed/main/detail/a3be7a7db390421bb1b0fe5164a60b4d)
+
+#### Q1: HashMap 的数据结构组成？
+
+**参考答案**：
+
+**JDK 1.8 结构**：数组 + 链表 + 红黑树
+
+```java
+// Node 节点结构
+class Node<K, V> {
+    final int hash;
+    final K key;
+    V value;
+    Node<K, V> next;
+}
+```
+
+**关键参数**：
+- 默认初始容量：16
+- 默认负载因子：0.75
+- 链表转红黑树阈值：8
+- 红黑树转链表阈值：6
+
+**put 流程**：
+1. 计算 key 的 hash 值
+2. 定位到数组桶位置
+3. 桶为空 → 直接插入
+4. 桶不为空 → 遍历链表/红黑树
+5. 相同 key → 覆盖 value
+6. 链表长度 >= 8 且数组长度 >= 64 → 红黑树
+
+**追问**：
+- 为什么负载因子是 0.75？
+- 链表转红黑树为什么是 8？
+
+---
+
+#### Q2: JMM 的执行顺序原理？
+
+**参考答案**：
+
+**JMM（Java Memory Model）**：定义了多线程环境下共享变量的可见性和有序性。
+
+**主内存与工作内存**：
+```
+线程 A                线程 B
+  │                     │
+工作内存              工作内存
+  │                     │
+  └─────── 主内存 ───────┘
+```
+
+**happens-before 原则**：
+1. 程序顺序规则
+2. 监视器锁规则
+3. volatile 变量规则
+4. 线程启动规则
+5. 线程终止规则
+6. 传递性规则
+
+**指令重排**：
+- 编译器优化重排
+- 处理器指令级并行重排
+- 内存系统重排
+
+**追问**：
+- happens-before 和 as-if-serial 的区别？
+- volatile 如何禁止指令重排？
+
+---
+
+#### Q3: TLS 如何加密？
+
+**参考答案**：
+
+**TLS 握手过程**（TLS 1.2）：
+```
+客户端                                    服务端
+   │                                        │
+   │──── ClientHello（随机数、支持的加密套件）──→│
+   │                                        │
+   │←── ServerHello（随机数、选择的加密套件）────│
+   │←── Certificate（服务器证书）────────────────│
+   │←── ServerHelloDone ────────────────────────│
+   │                                        │
+   │──── ClientKeyExchange（预主密钥）─────────→│
+   │──── ChangeCipherSpec ────────────────────→│
+   │──── Finished ────────────────────────────→│
+   │                                        │
+   │←── ChangeCipherSpec ──────────────────────│
+   │←── Finished ──────────────────────────────│
+```
+
+**密钥生成**：
+1. 客户端生成随机预主密钥（Pre-Master Secret）
+2. 用服务器公钥加密发送
+3. 双方用预主密钥 + 两个随机数生成主密钥
+4. 主密钥派生出会话密钥
+
+**加密方式**：
+- **对称加密**：AES、ChaCha20（数据传输）
+- **非对称加密**：RSA、ECDHE（密钥交换）
+- **哈希算法**：SHA-256（消息认证）
+
+**追问**：
+- TLS 1.3 相比 1.2 有什么改进？
+- HTTPS 如何防止中间人攻击？
+
+---
+
+#### Q4: 双亲委派机制原理？
+
+**参考答案**：
+
+**类加载器层次**：
+```
+启动类加载器（Bootstrap ClassLoader）
+    ↑
+扩展类加载器（Extension ClassLoader）
+    ↑
+应用类加载器（Application ClassLoader）
+    ↑
+自定义类加载器（Custom ClassLoader）
+```
+
+**工作流程**：
+1. 收到类加载请求
+2. 委派给父类加载器
+3. 父类无法加载，再自己加载
+
+**代码示例**：
+```java
+protected Class<?> loadClass(String name, boolean resolve) {
+    // 1. 检查是否已加载
+    Class<?> c = findLoadedClass(name);
+    if (c == null) {
+        try {
+            if (parent != null) {
+                // 2. 委派给父类
+                c = parent.loadClass(name, false);
+            } else {
+                c = findBootstrapClassOrNull(name);
+            }
+        } catch (ClassNotFoundException e) {
+            // 父类无法加载，继续
+        }
+        if (c == null) {
+            // 3. 自己加载
+            c = findClass(name);
+        }
+    }
+    return c;
+}
+```
+
+**好处**：
+- 安全性：防止核心类被篡改
+- 唯一性：避免类重复加载
+
+**打破双亲委派**：
+- SPI 机制：线程上下文类加载器
+- Tomcat：WebApp 类加载器
+
+**追问**：
+- Tomcat 如何打破双亲委派？
+- SPI 机制为什么需要打破双亲委派？
+
+---
+
+#### Q5: 从输入 URL 到页面展示的完整流程？
+
+**参考答案**：
+
+**完整流程**：
+
+1. **DNS 解析**：域名 → IP 地址
+```
+浏览器缓存 → 系统缓存 → hosts 文件 → DNS 服务器
+```
+
+2. **TCP 连接**：三次握手
+```
+SYN → SYN+ACK → ACK
+```
+
+3. **TLS 握手**：建立安全连接
+
+4. **HTTP 请求**：发送请求报文
+```
+GET /index.html HTTP/1.1
+Host: www.example.com
+```
+
+5. **服务器处理**：
+```
+Nginx 反向代理 → 应用服务器 → 数据库查询
+```
+
+6. **HTTP 响应**：返回响应报文
+```
+HTTP/1.1 200 OK
+Content-Type: text/html
+<html>...</html>
+```
+
+7. **浏览器渲染**：
+   - HTML 解析 → DOM 树
+   - CSS 解析 → CSSOM 树
+   - DOM + CSSOM → 渲染树
+   - 布局（Layout）
+   - 绘制（Paint）
+   - 合成（Composite）
+
+**追问**：
+- 浏览器如何解析 JS 文件？
+- 重绘和回流的区别？
+
+---
+
+#### Q6: synchronized 和 ReentrantLock 的区别？
+
+**参考答案**：
+
+| 特性 | synchronized | ReentrantLock |
+|------|-------------|---------------|
+| 实现层级 | JVM 关键字 | Java 类 |
+| 锁获取/释放 | 自动 | 手动 lock/unlock |
+| 可中断 | 不可 | 可（lockInterruptibly） |
+| 公平锁 | 非公平 | 可选公平/非公平 |
+| 条件变量 | 单一（wait/notify） | 多个（Condition） |
+| 锁状态 | 不可判断 | 可判断（tryLock） |
+
+**代码示例**：
+```java
+// synchronized
+public synchronized void method() {
+    // 临界区
+}
+
+// ReentrantLock
+private final ReentrantLock lock = new ReentrantLock();
+public void method() {
+    lock.lock();
+    try {
+        // 临界区
+    } finally {
+        lock.unlock();
+    }
+}
+```
+
+**使用场景**：
+- **synchronized**：简单同步，不需要高级功能
+- **ReentrantLock**：需要公平锁、可中断、多条件变量
+
+**追问**：
+- ReentrantLock 的实现原理（AQS）？
+- 公平锁和非公平锁的区别？
+
+---
+
+**面试总结**：
+- 小红书一面八股为主，不问项目
+- 网络题多（TCP、TLS、滑动窗口）
+- 并发题深入（volatile、CAS、线程池）
+- 手撕代码考单例模式
+
+---
+
 [返回目录](../README.md)
