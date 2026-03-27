@@ -14,73 +14,24 @@
 
 ## 知识点索引
 
-- [Java基础](Java基础.md)
-- [并发编程](并发编程.md)
-- [JVM](JVM.md)
-- [数据库](数据库.md)
-- [分布式](分布式.md)
-- [真题收录](真题收录.md)
-
-
-## 设计模式
-
-
-### Q14: Spring 中的设计模式？
-
-**常见设计模式**：
-
-| 模式 | Spring 应用 |
-|------|-------------|
-| 工厂模式 | BeanFactory、ApplicationContext |
-| 单例模式 | Bean 默认单例 |
-| 代理模式 | AOP |
-| 模板方法 | JdbcTemplate、RedisTemplate |
-| 策略模式 | Resource 加载策略 |
-| 观察者模式 | ApplicationEvent |
-| 适配器模式 | HandlerAdapter |
-| 装饰器模式 | BeanWrapper |
-
-**示例**：
-
-```java
-// 工厂模式
-BeanFactory factory = new ClassPathXmlApplicationContext("beans.xml");
-User user = (User) factory.getBean("user");
-
-// 单例模式（Spring Bean 默认单例）
-@Service
-@Scope("singleton")
-public class UserService {}
-
-// 代理模式（AOP）
-@Aspect
-@Component
-public class LoggingAspect {
-    @Around("execution(* com.example.service.*.*(..))")
-    public Object log(ProceedingJoinPoint pjp) throws Throwable {
-        // 前置通知
-        Object result = pjp.proceed();
-        // 后置通知
-        return result;
-    }
-}
-
-// 模板方法
-jdbcTemplate.query("SELECT * FROM user", (rs, rowNum) -> {
-    return new User(rs.getLong("id"), rs.getString("name"));
-});
-```
+| 文件 | 内容 |
+|------|------|
+| [Java基础.md](Java基础.md) | 集合、String、反射、泛型、IO |
+| [并发编程.md](并发编程.md) | 线程、锁、线程池、JUC |
+| [JVM.md](JVM.md) | 内存模型、GC、类加载 |
+| [数据库.md](数据库.md) | MySQL、Redis、事务 |
+| [分布式.md](分布式.md) | 微服务、MQ、分布式锁 |
+| [真题收录.md](真题收录.md) | 按日期整理的社招面经 |
 
 ---
-
 
 ## 面试技巧
 
-
-1. **分布式要懂**：网易喜欢问分布式相关，要理解分布式概念
-2. **多线程要精**：线程池、锁、协作机制都要熟悉
-3. **项目要能讲**：项目背景、技术选型要能说清楚
-4. **框架要了解**：Spring、MyBatis、Kafka、Netty
-5. **设计模式**：23 种设计模式，重点掌握 Spring 中的应用
+1. **分布式要懂**：网易重视分布式，要准备相关项目
+2. **Spring 全家桶**：要熟悉 Spring Boot、Spring Cloud
+3. **设计模式**：常见设计模式要能说出应用场景
+4. **项目经验**：分布式项目经验加分
 
 ---
+
+[返回目录](../README.md)
