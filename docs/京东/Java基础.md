@@ -8,7 +8,7 @@
 
 ---
 
-## 一、Java 基础高频题
+## Java 基础高频题
 
 
 ### Q1: String、StringBuilder、StringBuffer 区别？

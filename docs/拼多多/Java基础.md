@@ -9,7 +9,7 @@
 
 ---
 
-## 一、Java 基础高频题
+## Java 基础高频题
 
 
 ### Q1: HashMap 实现原理？
@@ -185,7 +185,7 @@ Annotation[] annotations = clazz.getAnnotations();
 ---
 
 
-## 三、操作系统高频题
+## 操作系统高频题
 
 
 ### Q7: 用户态和核心态切换条件？

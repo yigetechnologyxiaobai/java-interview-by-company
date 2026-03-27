@@ -9,7 +9,7 @@
 
 ---
 
-## 一、Java 基础高频题
+## Java 基础高频题
 
 
 ### Q1: HashMap 底层实现原理？
@@ -110,7 +110,7 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
 ---
 
 
-## 五、网络编程高频题
+## 网络编程高频题
 
 
 ### Q10: WebSocket 实现原理？
