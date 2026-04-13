@@ -30,7 +30,7 @@ search_interviews() {
   # 此脚本主要用于文件操作和推送
 }
 
-# 推送到远程仓库
+# 推送到远程仓库（双仓库推送）
 push_to_remote() {
   cd "$PROJECT_DIR"
   
@@ -48,18 +48,13 @@ push_to_remote() {
   git add -A
   git commit -m "[Auto] 更新社招面经 $(date '+%Y-%m-%d')"
   
-  # 使用 Token 推送到 Gitee
-  git push https://oauth2:${GITEE_TOKEN:-809963ae5af00e4f5e868d81d89b69ca}@gitee.com/chi_yang_yang/java-interview-by-company.git main
+  # 推送到 Gitee (origin)
+  git push origin main
+  log "已推送至 Gitee 远程仓库"
   
-  log "已推送至远程仓库"
-}
-  
-  # 调用 mcporter 搜索
-  mcporter call exa.web_search_exa \
-    --args '{"query": "'"$query"'", "numResults": 5}' \
-    2>/dev/null | jq -r '.results[]?.text' > /tmp/search_result.txt
-  
-  cat /tmp/search_result.txt
+  # 推送到 GitHub (github)
+  git push github main
+  log "已推送至 GitHub 远程仓库"
 }
 
 # 去重检查
