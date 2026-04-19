@@ -19,6 +19,15 @@
 - [网易](./docs/网易/README.md)
 - [拼多多](./docs/拼多多/README.md)
 - [蚂蚁集团](./docs/蚂蚁集团/README.md)
+- [小米](./docs/小米/README.md)
+- [58同城](./docs/58同城/README.md)
+- [顺丰](./docs/顺丰/README.md)
+- [欧科云链](./docs/欧科云链/README.md)
+- [哈啰](./docs/哈啰/README.md)
+- [转转](./docs/转转/README.md)
+- [达达](./docs/达达/README.md)
+- [数数科技](./docs/数数科技/README.md)
+- [2026 社招精选](./docs/2026社招精选/README.md)
 
 ---
 
@@ -57,6 +66,6 @@
 
 ---
 
-**Last Updated**: 2026-03-24
+**Last Updated**: 2026-04-19
 
 **总题量**: 4191 行，涵盖 12 家互联网大厂
