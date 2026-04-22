@@ -10,6 +10,7 @@
 | [真题收录.md](真题收录.md) | 2026社招精选高频真题（Java 21、JVM调优、并发进阶、MySQL、Redis、微服务、系统设计） | - |
 | [AI工程化专题.md](AI工程化专题.md) | 2026年 AI 工程化方向面试真题（RAG、Agent、LLM 工程挑战） | - |
 | [SpringBoot4与SpringAI.md](SpringBoot4与SpringAI.md) | Spring Boot 4.0 + Spring AI 2.0 核心特性、Function Calling、AI应用架构 | - |
+| [2026年4月最新面经.md](2026年4月最新面经.md) | 2026-04 最新一手面经（阿里/蚂蚁/字节/邦盛/亚信），虚拟线程、AI Agent、分布式一致性等热点 | - |
 
 ## 🎯 特点
 

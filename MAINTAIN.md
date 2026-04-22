@@ -79,6 +79,7 @@
 | 2026-04-16 12:00 | 定时任务执行 | 自动搜索社招Java面经，参考小林coding、JavaGuide等高质量内容，美团真题已完善（含2026-03-27至2026-04-06多轮真题），推送GitHub+Gitee双仓库 |
 | 2026-04-19 12:00 | 定时任务执行 | 新增「2026社招精选」专题：① AI工程化方向（RAG架构、Agent设计、LLM工程挑战）；② Java 21新特性（虚拟线程、模式匹配、Record）；③ JVM调优实战（G1 GC、ZGC、OOM排查）；④ 并发进阶（ThreadLocal泄漏、CompletableFuture、分布式锁对比）；⑤ MySQL进阶（十亿级分页、MVCC、索引失效）；⑥ Redis高阶（一致性方案、大Key、RedLock争议）；⑦ 微服务架构（全链路灰度、同城多活、熔断降级限流）；⑧ 系统设计高频场景题（秒杀、消息队列、短链接）；美团真题补充3道（Spring Boot 3.x、连接池调优、幂等性）；更新README目录和MAINTAIN维护日志 |
 | 2026-04-21 12:00 | 定时任务执行 | 新增「携程」公司面经（微服务治理、高可用架构、MySQL、Redis、分布式锁、系统设计）；新增 Spring Boot 4.0 + Spring AI 2.0 专题（虚拟线程、ChatClient、Function Calling、AI应用架构）；更新README和MAINTAIN维护日志，推送GitHub+Gitee双仓库 |
+| 2026-04-22 12:00 | 定时任务执行 | 新增「2026年4月最新面经」专题：① 虚拟线程深度考察（蚂蚁国际，含用户态线程原理、锁升级、volatile内存可见性）；② AI Agent工程化（阿里一面，含Agent架构、Function Calling、MCP协议）；③ 分布式一致性场景（支付+积分最终一致性方案）；④ JVM性能优化（Full GC排查、秒杀系统线程池设计）；⑤ 数据库与缓存（DB与ES一致性、ThreadLocal泄漏、RocketMQ事务消息、Redis锁过期处理）；⑥ 网络与安全（HTTPS防篡改、JWT登录排他）；⑦ 算法（滑动窗口最大值、股票买卖问题）；更新README目录和MAINTAIN维护日志，推送GitHub+Gitee双仓库 |
 
 ---
 
